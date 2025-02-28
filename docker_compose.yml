@@ -1,0 +1,9 @@
+services:
+  openai-horde-image-proxy:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - AI_HORDE_API_KEY=0000000000

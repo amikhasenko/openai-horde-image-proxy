@@ -8,18 +8,25 @@ from tqdm import tqdm
 from io import BytesIO
 import time
 from PIL import Image
+from time import time
 
-# Configure the logger
+
+# logger, environment
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
+# flask
 app = Flask(__name__)
 AI_HORDE_API_URL = 'https://aihorde.net'
-API_KEY = 'your-api-key'
+
+def get_aihorde_api_key():
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        return auth_header.split("Bearer ")[1]
+    return "0000000000"
 
 @app.route('/images/generations', methods=['POST'])
 def generate_image():
     try:
-        # Extract form data from the request
         data = request.get_json()
         form_data = {
             "prompt": data.get("prompt"),
@@ -27,8 +34,8 @@ def generate_image():
             "size": data.get("size", "512x512"),
             "model": data.get("model", "stable_diffusion")
         }
+        created_time = time()
         logging.debug(form_data)
-        # Prepare the payload for AI Horde
         payload = {
             "prompt": form_data["prompt"],
             "params": {
@@ -51,9 +58,8 @@ def generate_image():
         print(payload["prompt"])
         pbar_queue_position = tqdm(desc="queue position: N/A | Wait Time: N/A", bar_format="{desc}")
         pbar_progress = tqdm(total=form_data['n'], desc="progress")
-        # Make a POST request to AI Horde
         headers = {
-            "apikey": API_KEY,
+            "apikey": get_aihorde_api_key(),
             "Client-Agent": "openwebui-image-generator"
         }
         response = requests.post(
@@ -61,7 +67,6 @@ def generate_image():
             json=payload,
             headers=headers
         )
-        # Check if the request was successful
         logging.info(response)
         try:
             logging.debug(response.json())
@@ -69,12 +74,10 @@ def generate_image():
             logging.debug("Response body is not JSON")
         if not response.ok:
             return jsonify({"error": "Failed to generate image"}), 500
-        # Parse the response from AI Horde
         results = response.json()
         req_id = results.get('id')
         if not req_id:
             return jsonify({"error": "No request ID found in response"}), 400
-        # Check status of the generated image until it is complete
         status_url = f"{AI_HORDE_API_URL}/api/v2/generate/check/{req_id}"
         retry = 0
         is_done = False
@@ -91,7 +94,6 @@ def generate_image():
                     f"Res:{chk_results.get('restarted')} "
                     f"Fin:{chk_results.get('finished')}"
                 )
-                # logging.info(f"Queue Position: {chk_results.get('queue_position')} | ETA: {chk_results.get('wait_time')}s")
                 pbar_queue_position.desc = f"Queue Position: {chk_results.get('queue_position')} | ETA: {chk_results.get('wait_time')}s"
                 pbar_progress.n = chk_results.get('finished')
                 pbar_queue_position.refresh()
@@ -105,7 +107,6 @@ def generate_image():
                     time.sleep(1)
                     continue
                 return jsonify({"error": "Failed to check image status"}), 500
-        # Retrieve the generated images from AI Horde
         results_url = f"{AI_HORDE_API_URL}/api/v2/generate/status/{req_id}"
         results_response = requests.get(results_url, headers=headers)
         if not results_response.ok:
@@ -123,7 +124,7 @@ def generate_image():
             img_b64 = result["img"]
             images.append("data:image/webp," + result["img"])
         response = {
-                "created": 1589478378,
+                "created": created_time,
                 "data": [{"b64_json": x} for x in images],
         }
         return jsonify(response)
