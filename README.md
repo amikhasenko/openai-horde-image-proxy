@@ -97,8 +97,6 @@ This project is licensed under the MIT License.
 
 ## TODO
 
-# TODO
-
 - [ ] Add proper error handling for AI Horde API rate limits.
 - [ ] Optimize image generation request parameters for better performance.
 - [ ] Improve logging with more granular levels (e.g., `INFO`, `DEBUG`, `WARNING`).
