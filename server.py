@@ -8,11 +8,10 @@ from tqdm import tqdm
 from io import BytesIO
 import time
 from PIL import Image
-from time import time
 
 
 # logger, environment
-logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # flask
 app = Flask(__name__)
@@ -34,15 +33,15 @@ def generate_image():
             "size": data.get("size", "512x512"),
             "model": data.get("model", "stable_diffusion")
         }
-        created_time = time()
+        created_time = time.time()
         logging.debug(form_data)
         payload = {
             "prompt": form_data["prompt"],
+            "models": [form_data["model"]],
             "params": {
                 "n": form_data["n"],
                 "width": int(form_data["size"].split('x')[0]),
                 "height": int(form_data["size"].split('x')[1]),
-                "models": [form_data["model"]],
                 "steps": 50,
                 "sampler_name": "k_euler_a",
                 "cfg_scale": 7.5,
@@ -73,6 +72,7 @@ def generate_image():
         except ValueError:
             logging.debug("Response body is not JSON")
         if not response.ok:
+            logging.error(response.json())
             return jsonify({"error": "Failed to generate image"}), 500
         results = response.json()
         req_id = results.get('id')
@@ -86,6 +86,7 @@ def generate_image():
                 chk_req = requests.get(status_url)
                 if not chk_req.ok:
                     logging.error(f"Not ok starus response: {chk_req.status_code}")
+                    logging.error(chk_req.json())
                     return jsonify({"error": "Not ok starus response"}), 500
                 chk_results = chk_req.json()
                 pbar_progress.desc = (
@@ -99,18 +100,20 @@ def generate_image():
                 pbar_queue_position.refresh()
                 pbar_progress.refresh()
                 is_done = chk_results['done']
+                time.sleep(2)
             except ConnectionError as e:
                 retry += 1
                 logging.error(
                     f"Error {e} when retrieving status. Retry {retry}/10")
                 if retry < 10:
-                    time.sleep(1)
+                    time.sleep(10)
                     continue
                 return jsonify({"error": "Failed to check image status"}), 500
         results_url = f"{AI_HORDE_API_URL}/api/v2/generate/status/{req_id}"
         results_response = requests.get(results_url, headers=headers)
         if not results_response.ok:
             logging.error(f"Failed to retrieve image results: {results_response.status_code}")
+            logging.error(results_response.json())
             return jsonify({"error": "Failed to retrieve image results"}), 500
         results_data = results_response.json()
         try:
