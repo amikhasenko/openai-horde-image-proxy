@@ -52,7 +52,7 @@ Using anonimosly also posible with key `0000000000`
 
 The `docker-compose.yml` file configures the application to:
 - Build the Docker image from the current directory.
-- Set the container name to `my-flask-container`.
+- Set the container name to `openai-horde-image-proxy`.
 - Expose port `5000`.
 
 ## Gunicorn Configuration
@@ -73,7 +73,7 @@ docker-compose down
 You can view the logs of the running container in real time with:
 
 ```bash
-docker logs -f my-flask-container
+docker logs -f openai-horde-image-proxy
 ```
 
 ## Notes
