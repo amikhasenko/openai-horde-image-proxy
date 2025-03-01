@@ -91,9 +91,6 @@ We welcome contributions to improve this project! To contribute:
 4. Push to the branch (`git push origin feature-name`).
 5. Create a new pull request.
 
-## License
-
-This project is licensed under the MIT License.
 
 ## TODO
 
@@ -105,3 +102,8 @@ This project is licensed under the MIT License.
 Support more endpoints:
 - [ ] Text generation
 - [ ] Img2img
+
+
+## License
+
+This project is licensed under the MIT License.
