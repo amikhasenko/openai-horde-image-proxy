@@ -1,6 +1,7 @@
 # OpenAI Horde image proxy App
 
 OpenAI API compatible image generation proxy to AI Horde
+
 [Open AI API](https://platform.openai.com/docs/api-reference/images/create) -> [AI Horde API](https://aihorde.net/api)
 
 ## Requirements
@@ -44,6 +45,7 @@ http://localhost:5000/v1/images/generations
 ### 4. API Key (optional) and model
 
 API key provided with the request. You can get it [here](https://aihorde.net/register)
+
 Using anonimosly also posible with key `0000000000`
 
 ### 5. Docker Compose Configuration
@@ -95,8 +97,13 @@ This project is licensed under the MIT License.
 
 ## TODO
 
-- Add proper error handling for AI Horde API rate limits.
-- Optimize image generation request parameters for better performance.
-- Improve logging with more granular levels (e.g., `INFO`, `DEBUG`, `WARNING`).
-- Support more endpoints (text generation, img2img, ...)
-- Implement user authentication for API access.
+# TODO
+
+- [ ] Add proper error handling for AI Horde API rate limits.
+- [ ] Optimize image generation request parameters for better performance.
+- [ ] Improve logging with more granular levels (e.g., `INFO`, `DEBUG`, `WARNING`).
+- [ ] Implement user authentication for API access.
+
+Support more endpoints:
+- [ ] Text generation
+- [ ] Img2img
