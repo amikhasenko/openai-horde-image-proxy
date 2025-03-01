@@ -13,7 +13,7 @@ OpenAI API compatible image generation proxy to AI Horde
 ### 1. Clone the Repository
 
 ```bash
-git clone [<repository-url>](https://github.com/amikhasenko/openai-horde-image-proxy/
+git clone https://github.com/amikhasenko/openai-horde-image-proxy/
 cd openai-horde-image-proxy
 ```
 
