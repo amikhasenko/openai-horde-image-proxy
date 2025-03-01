@@ -1,5 +1,6 @@
 services:
   openai-horde-image-proxy:
+    container_name: openai-horde-image-proxy
     build: 
       context: .
       dockerfile: Dockerfile
