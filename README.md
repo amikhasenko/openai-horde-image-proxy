@@ -68,10 +68,10 @@ docker-compose down
 
 ## Logging
 
-You can view the logs of the running container with:
+You can view the logs of the running container in real time with:
 
 ```bash
-docker logs my-flask-container
+docker logs -f my-flask-container
 ```
 
 ## Notes
