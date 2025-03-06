@@ -27,11 +27,12 @@ def get_aihorde_api_key():
 def generate_image():
     try:
         data = request.get_json()
+        model, *params = data.get("model", "stable_diffusion").split("*")
         form_data = {
             "prompt": data.get("prompt"),
             "n": int(data.get("n", 1)),
             "size": data.get("size", "512x512"),
-            "model": data.get("model", "stable_diffusion")
+            "model": model,
         }
         created_time = time.time()
         logging.debug(form_data)
@@ -49,8 +50,9 @@ def generate_image():
                 "hires_fix_denoising_strength": 0.5,
             },
             "trusted_workers": False,
-            "nsfw": False,
-            "censor_nsfw": False,
+            "nsfw": "nsfw" in params,
+            "censor_nsfw": "censor_nsfw" in params,
+            "shared": "shared" in params,
             "r2": False,
         }
         logging.debug(payload)
