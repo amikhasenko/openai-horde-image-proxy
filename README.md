@@ -39,7 +39,7 @@ docker run -p 5000:5000 --name openai-horde-image-proxy openai-horde-image-proxy
 
 Served endpoint:
 ```
-http://localhost:5000/v1/images/generations
+http://localhost:5000/images/generations
 ```
 
 ### 4. API Key (optional) and model
