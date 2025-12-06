@@ -17,6 +17,23 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 app = Flask(__name__)
 AI_HORDE_API_URL = 'https://aihorde.net'
 
+import re
+
+def extract_command(command, used, text):
+    pattern = "/" + command + r'\s+(?:"([^"]+)"|\'([^\']+)\'|(\S+))'
+    match = re.search(pattern, text)
+    if match:
+        model_string = next(group for group in match.groups() if group is not None)
+        # Remove the matched /model part from the text
+        cleaned_text = re.sub(pattern, '', text, count=1).strip()
+        return model_string, cleaned_text
+    return used, text  # No match found
+
+def extract_bool_command(command, used, text):
+    if "/"+command not in text:
+        return used, text
+    return True, text.replace("/"+command, "")
+
 def get_aihorde_api_key():
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
@@ -27,38 +44,61 @@ def get_aihorde_api_key():
 def generate_image():
     try:
         data = request.get_json()
-        model, *params = data.get("model", "stable_diffusion").split("*")
         form_data = {
             "prompt": data.get("prompt"),
-            "n": int(data.get("n", 1)),
+            "n": str(data.get("n", "1")),
             "size": data.get("size", "512x512"),
-            "model": model,
+            "model": data.get("model", "stable_diffusion"),
+            "steps": "50",
+            "sampler_name": "k_euler_a",
+            "nsfw": False,
+            "shared": False,
+            "censor_nsfw": False,
+            "trusted_workers": False,
+            "tilting": False,
+            "sampler_name": "k_euler_a",
+            "cfg_scale": 7.5,
+            "denoising_strength": 0.6,
+            "hires_fix_denoising_strength": 0.5,
+            "post_processing": None,
         }
+        form_data["model"], form_data["prompt"] = extract_command("model", form_data["model"], form_data["prompt"])
+        form_data["model"], *params = form_data["model"].split("*")
+
+        for name in ["size", "steps", "sampler_name", "denoising_strength", "hires_fix_denoising_strength", "cfg_scale", "post_processing", "n"]:
+            form_data[name], form_data["prompt"] = extract_command(name, form_data[name], form_data["prompt"])
+        for name in ["nsfw", "censor_nsfw", "shared", "trusted_workers", "transparent", "tiling"]:
+            form_data[name], form_data["prompt"] = extract_bool_command(name, name in params, form_data["prompt"])
+        
+        
         created_time = time.time()
         logging.debug(form_data)
         payload = {
             "prompt": form_data["prompt"],
             "models": [form_data["model"]],
             "params": {
-                "n": form_data["n"],
+                "n": int(form_data["n"]),
                 "width": int(form_data["size"].split('x')[0]),
                 "height": int(form_data["size"].split('x')[1]),
-                "steps": 50,
-                "sampler_name": "k_euler_a",
-                "cfg_scale": 7.5,
-                "denoising_strength": 0.6,
-                "hires_fix_denoising_strength": 0.5,
+                "steps": int(form_data["steps"]),
+                "transparent": form_data["transparent"],
+                "sampler_name": form_data["sampler_name"],
+                "cfg_scale": float(form_data["cfg_scale"]),
+                "denoising_strength": float(form_data["denoising_strength"]),
+                "hires_fix_denoising_strength": float(form_data["hires_fix_denoising_strength"]),
+                "post_processing": form_data["post_processing"].split("->") if form_data["post_processing"] != None else [],
+                "tilting": form_data["tilting"],
             },
-            "trusted_workers": False,
-            "nsfw": "nsfw" in params,
-            "censor_nsfw": "censor_nsfw" in params,
-            "shared": "shared" in params,
+            "trusted_workers": form_data["trusted_workers"],
+            "nsfw": form_data["nsfw"],
+            "censor_nsfw": form_data["censor_nsfw"],
+            "shared": form_data["shared"],
             "r2": False,
         }
         logging.debug(payload)
         print(payload["prompt"])
         pbar_queue_position = tqdm(desc="queue position: N/A | Wait Time: N/A", bar_format="{desc}")
-        pbar_progress = tqdm(total=form_data['n'], desc="progress")
+        pbar_progress = tqdm(total=int(form_data['n']), desc="progress")
         headers = {
             "apikey": get_aihorde_api_key(),
             "Client-Agent": "openwebui-image-generator"
